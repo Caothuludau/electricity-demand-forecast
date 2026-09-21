@@ -1,0 +1,47 @@
+{
+  "algorithm": "LightGBM quantile regression",
+  "quantiles": {
+    "p10": 0.1,
+    "p50": 0.5,
+    "p90": 0.9
+  },
+  "horizon_hours": 1,
+  "test_days": 30,
+  "validation": "temporal holdout: last 30 days, chronological, no random split",
+  "features": [
+    "hour",
+    "dayofweek",
+    "month",
+    "dayofyear",
+    "is_weekend",
+    "hour_sin",
+    "hour_cos",
+    "dow_sin",
+    "dow_cos",
+    "lag_1",
+    "lag_2",
+    "lag_3",
+    "lag_24",
+    "lag_48",
+    "lag_168",
+    "roll_mean_6",
+    "roll_std_6",
+    "roll_mean_24",
+    "roll_std_24",
+    "roll_mean_168",
+    "roll_std_168",
+    "temperature_lag1",
+    "humidity_lag1",
+    "wind_speed_lag1"
+  ],
+  "train_rows": 7847,
+  "test_rows": 721,
+  "capacity_threshold": 99400.4391375,
+  "capacity_definition": "P95 of observed hourly total load (training period)",
+  "risk_rule": {
+    "low": "P90 < capacity",
+    "medium": "P50 < capacity <= P90",
+    "high": "capacity <= P50"
+  },
+  "trained_at": "2026-09-21T09:46:43.731426"
+}

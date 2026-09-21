@@ -1,0 +1,37 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: energy-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      # mount the raw CSV so the image doesn't need to bake in data;
+      # processed artifacts are generated inside the container at startup
+      - ./document:/app/document:ro
+      - processed-data:/app/data/processed
+      - model-artifacts:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 300s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: energy-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  processed-data:
+  model-artifacts:

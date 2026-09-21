@@ -1,0 +1,14 @@
+{
+  "source_file": "Tetuan City power consumption.csv",
+  "raw_frequency": "10min",
+  "raw_rows": 52416,
+  "raw_start": "2017-01-01 00:00:00",
+  "raw_end": "2017-12-30 23:50:00",
+  "hourly_start": "2017-01-01 00:00:00",
+  "hourly_end": "2017-12-30 23:00:00",
+  "hourly_rows": 8736,
+  "aggregation": "hourly mean of six 10-minute observations per zone",
+  "total_power_definition": "zone1 + zone2 + zone3 (hourly means)",
+  "units": "kW-scale readings (zone mean ~32,000); dashboard displays MW",
+  "generated_at": "2026-09-21T09:45:12.885496"
+}
