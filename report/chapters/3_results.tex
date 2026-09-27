@@ -1,0 +1,143 @@
+\section{Evaluation Results and Insights}
+\label{sec:results}
+
+Square-bracket numbers in this section are placeholders. They are replaced
+by the fields of \path{source_code/outputs/metrics.json}. The pipeline
+does not tune on \(T_{\mathrm{test}}\).
+
+\subsection{Model Performance Evaluation}
+\label{sec:performance}
+
+On a test block of \(n\) hours with demand \(y_t\) and forecast
+\(\hat{y}_t\), the three error scores are
+\begin{align}
+  \mathrm{MAE} &= \frac{1}{n}\sum_{t=1}^{n}\lvert y_t-\hat{y}_t\rvert, \label{eq:mae}\\
+  \mathrm{RMSE} &= \sqrt{\frac{1}{n}\sum_{t=1}^{n}(y_t-\hat{y}_t)^2}, \label{eq:rmse}\\
+  \mathrm{WAPE} &= \frac{\sum_{t=1}^{n}\lvert y_t-\hat{y}_t\rvert}{\sum_{t=1}^{n}\lvert y_t\rvert}. \label{eq:wape}
+\end{align}
+MAE and RMSE are reported in kW. RMSE penalises large misses more than MAE,
+which matters for hours near the capacity limit. WAPE scales the absolute
+error by total demand, so it can be read as a system-wide percentage.
+
+\begin{table}[h]
+  \centering
+  \small
+  \begin{tabular}{@{}lrrr@{}}
+    \toprule
+    Model & MAE (kW) & RMSE (kW) & WAPE (\%) \\
+    \midrule
+    Seasonal naive & [XX] & [XX] & [XX] \\
+    Ridge & [XX] & [XX] & [XX] \\
+    Random forest & [XX] & [XX] & [XX] \\
+    XGBoost & [XX] & [XX] & [XX] \\
+    LightGBM & [XX] & [XX] & [XX] \\
+    \bottomrule
+  \end{tabular}
+  \caption{Test-block scores. Source: \texttt{test\_scores} in \texttt{metrics.json}.}
+  \label{tab:scores}
+\end{table}
+
+\begin{figure}[h]
+  \centering
+  \figplaceholder{Bar chart of test MAE and RMSE (\texttt{model\_comparison.png})\\
+  and a two-week overlay of actual demand, the best forecast, and \(\tau\)\\
+  (\texttt{forecast\_test.png}).}
+  \caption{Error comparison and a visual check on the opening of \(T_{\mathrm{test}}\).}
+  \label{fig:comparison}
+\end{figure}
+
+The improvement of a learned model against the seasonal naive is
+\[
+  \frac{\mathrm{MAE}_{\mathrm{naive}}-\mathrm{MAE}_{\mathrm{model}}}{\mathrm{MAE}_{\mathrm{naive}}}.
+\]
+Report that percentage from \texttt{mae\_improvement\_vs\_naive\_pct}. The
+discussion should state whether LightGBM or XGBoost reduces both typical
+error (MAE, WAPE) and large error (RMSE) relative to the weekly baseline.
+A lower MAE alone is not enough if the peak hours remain biased.
+
+\subsection{Peak Capacity and Risk Metrics}
+\label{sec:peak}
+
+Average error can look acceptable while the forecast still misses the hour
+that threatens the network. Three peak scores are therefore computed on
+\(T_{\mathrm{test}}\) only.
+
+\paragraph{Peak magnitude error.}
+For each test day, take the actual peak and the forecast peak and record the
+absolute gap in kW. The reported value is the mean gap over days that contain
+at least 12 hours.
+
+\paragraph{Peak timing error.}
+For the same days, record the circular distance in hours between the clock
+time of the actual peak and the clock time of the forecast peak. A timing
+error of one hour still leaves a short window in which to arm reserve. An
+error of several hours does not.
+
+\paragraph{Breach anticipation rate.}
+Let \(\tau\) be the training 95th percentile, stored as \texttt{threshold\_kw}
+(numeric value [XX] kW). A breach hour is an hour with \(y_t>\tau\). The
+breach anticipation rate is the share of those hours for which the forecast
+also exceeds \(\tau\):
+\begin{equation}
+  \mathrm{BAR}
+  = \frac{\lvert\{t\in T_{\mathrm{test}}: y_t>\tau \ \mathrm{and}\ \hat{y}_t>\tau\}\rvert}
+         {\lvert\{t\in T_{\mathrm{test}}: y_t>\tau\}\rvert}.
+  \label{eq:bar}
+\end{equation}
+The one-hour-ahead forecast is issued before the hour closes, so a hit in
+\eqref{eq:bar} is an alert that precedes the realised breach. Alert precision,
+the share of threshold crossings that were real, is stored beside BAR so a
+high hit rate is not confused with a model that alerts every hour.
+
+\begin{table}[h]
+  \centering
+  \small
+  \begin{tabular}{@{}lrrrr@{}}
+    \toprule
+    Model & Peak magnitude (kW) & Peak timing (h) & BAR (\%) & Alert precision (\%) \\
+    \midrule
+    Seasonal naive & [XX] & [XX] & [XX] & [XX] \\
+    Ridge & [XX] & [XX] & [XX] & [XX] \\
+    Random forest & [XX] & [XX] & [XX] & [XX] \\
+    XGBoost & [XX] & [XX] & [XX] & [XX] \\
+    LightGBM & [XX] & [XX] & [XX] & [XX] \\
+    \bottomrule
+  \end{tabular}
+  \caption{Peak scores on \(T_{\mathrm{test}}\). Source: \texttt{peak} in \texttt{metrics.json}.}
+  \label{tab:peak}
+\end{table}
+
+\subsection{Findings and Operating Implications}
+\label{sec:insights}
+
+Two exogenous drivers are the focus of the interpretation. Hour of day sets
+the shape of the daily cycle. Temperature, together with the cooling-degree
+and squared-temperature terms, sets how high that cycle rises on a hot day.
+Lag and rolling features will often take a large share of LightGBM gain,
+because a one-hour-ahead forecast is strongly autoregressive. The importance
+figure should therefore be read in two layers: overall gain, and gain inside
+the weather and calendar group. Fill the ranking from
+\texttt{lightgbm\_importance} and \texttt{lightgbm\_importance\_groups}.
+
+\begin{figure}[h]
+  \centering
+  \figplaceholder{Top LightGBM features by gain share (\texttt{feature\_importance.png})\\
+  and the share of hours above \(\tau\) by clock hour (\texttt{breach\_by\_hour.png}).}
+  \caption{Drivers of the forecast and the clock hours that cross the capacity threshold.}
+  \label{fig:importance}
+\end{figure}
+
+The breach-by-hour profile is the basis for the reserve rule. Complete the
+following statement from \texttt{breach\_rate\_by\_hour\_pct}. The design
+target of the study is the evening window from 18:00 to 21:00, which is
+expected to concentrate threshold crossings and therefore to need reserve
+armed one to two hours earlier. If the measured profile peaks in a
+neighbouring window, state that window and keep the same lead time.
+
+\begin{quote}
+On the hourly series, the hours from [HH:00] to [HH:00] show the highest
+rate of demand above \(\tau\) ([XX]\% of hours in the busiest clock hour).
+Reserve for that window should be committed one to two hours in advance.
+Temperature and hour of day are the leading exogenous contributors to the
+peak. Their LightGBM gain shares are [XX]\% and [XX]\%.
+\end{quote}

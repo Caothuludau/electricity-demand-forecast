@@ -1,0 +1,92 @@
+\section{Introduction and Dataset}
+\label{sec:introduction}
+
+\subsection{Problem Statement and Business Understanding}
+\label{sec:problem}
+
+Modern cities depend on a distribution network that stays inside its safe
+operating range while demand moves with the weather and with daily activity.
+In Tetouan the measured load changes through the day and across the year.
+A forecast that arrives after the peak has already formed does not help the
+operator. The useful forecast is the one issued before the peak, with enough
+lead time to commit reserve capacity.
+
+The target of this project is a short-term forecast of city electricity
+demand. The primary horizon is the next hour. A 24-hour horizon is a natural
+extension and is left as future work in Section~\ref{sec:conclusion}. The
+forecast supports two operating decisions:
+
+\begin{enumerate}[label=(\arabic*), itemsep=2pt]
+  \item \textbf{Reserve-margin planning.} Compare the forecast with recent
+        history and decide how much spare capacity to hold.
+  \item \textbf{Peak-capacity alerting.} Raise an alert when the forecast
+        exceeds a capacity threshold, so operators can act one to two hours
+        before the highest-risk evening window.
+\end{enumerate}
+
+The capacity threshold \(\tau\) used in this study is the 95th percentile of
+hourly demand on the training block. It is an empirical stand-in for a
+published equipment rating. Replacing \(\tau\) with a utility-defined limit
+does not change the rest of the pipeline.
+
+\subsection{Primary Dataset Description}
+\label{sec:dataset}
+
+The dataset is the open UCI collection \emph{Power Consumption of Tetouan
+City} \cite{uci-tetouan, salam2018}. It records 10-minute observations for
+calendar year 2017. Each row contains weather measurements and the power of
+three distribution zones. Table~\ref{tab:columns} lists the fields used in
+this project.
+
+\begin{table}[h]
+  \centering
+  \small
+  \begin{tabular}{@{}llp{7.2cm}@{}}
+    \toprule
+    Field & Role & Description \\
+    \midrule
+    DateTime & Index & Timestamp of the 10-minute sample \\
+    Temperature & Weather & Ambient temperature (\(^\circ\mathrm{C}\)) \\
+    Humidity & Weather & Relative humidity \\
+    Wind Speed & Weather & Wind speed \\
+    General diffuse flows & Weather & General diffuse solar radiation \\
+    Diffuse flows & Weather & Diffuse solar radiation \\
+    Zone 1, Zone 2, Zone 3 & Load & Power of the three distribution zones (kW) \\
+    \bottomrule
+  \end{tabular}
+  \caption{Fields retained from the UCI Tetouan series.}
+  \label{tab:columns}
+\end{table}
+
+City demand at a 10-minute stamp is the sum of the three zones. Forecasting
+is performed on an hourly series. Inside each clock hour the pipeline averages
+the weather variables and averages city demand. Averaging keeps the target in
+kilowatts of mean power. Summing the six raw power readings inside an hour
+would inflate the unit and would no longer match a capacity rating expressed
+in kW.
+
+After aggregation, the hourly table is the modelling table. The first 168
+hours are consumed by the weekly lag, so the supervised sample starts once
+\texttt{lag\_168} is defined. Exact row counts, the calendar span, and the
+mean load of each zone are recorded in \texttt{outputs/metrics.json} under
+\texttt{raw} and \texttt{profile} when \texttt{run\_pipeline.py} is executed.
+Fill Table~\ref{tab:dataset-size} from that file.
+
+\begin{table}[h]
+  \centering
+  \small
+  \begin{tabular}{@{}ll@{}}
+    \toprule
+    Quantity & Value \\
+    \midrule
+    Raw rows (10-minute) & [XX] \\
+    Hourly rows & [XX] \\
+    Supervised rows after lag warm-up & [XX] \\
+    First timestamp & [YYYY-MM-DD HH:MM] \\
+    Last timestamp & [YYYY-MM-DD HH:MM] \\
+    Mean city demand & [XX] kW \\
+    \bottomrule
+  \end{tabular}
+  \caption{Dataset size after download and hourly aggregation.}
+  \label{tab:dataset-size}
+\end{table}

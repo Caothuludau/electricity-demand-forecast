@@ -1,0 +1,51 @@
+\section{Difficulties and Solutions}
+\label{sec:difficulties}
+
+\subsection{Data Leakage in a Time Series}
+\label{sec:leakage}
+
+A random row split mixes later hours into the training set. Neighbours of a
+test hour then appear on both sides of the split, and lagged copies of the
+target leak the answer. The resulting MAE looks strong and does not survive
+the next week of operations.
+
+The project uses a blocked temporal split. \(D_{\mathrm{train}}\),
+\(T_{\mathrm{valid}}\) and \(T_{\mathrm{test}}\) are contiguous, ordered and
+disjoint (Section~\ref{sec:models}). Rolling means and rolling standard
+deviations are computed on the demand series after a one-hour shift, so hour
+\(t\) is absent from the features that predict it. Validation labels are used
+to choose tree size, learning rate and the ridge penalty. They are not used
+as training targets, and the test block is not used to pick a model.
+
+\subsection{Non-linear Weather Response}
+\label{sec:nonlinear}
+
+A straight line in temperature understates the load on hot afternoons, when
+cooling equipment switches on and demand bends upward. Humidity and radiation
+move with temperature, so a single coefficient is a poor summary of the
+weather effect.
+
+Two complementary fixes are in the feature module and in the model module.
+The feature module adds cooling degree, squared temperature and the
+temperature-by-hour product, which give the linear model a limited ability to
+bend. The tree models (random forest, XGBoost, LightGBM) partition
+temperature and hour into regions, so the same hot hour can receive a
+different leaf value from a mild hour. The scatter plot in
+Figure~\ref{fig:weather} is the diagnostic that this structure is worth
+including. The gain shares in Figure~\ref{fig:importance} are the check that
+the fitted model actually uses it.
+
+\subsection{Error at the Peak, Hidden by the Mean}
+\label{sec:peak-error}
+
+MAE averages every hour. A quiet night with a small error can offset an
+evening miss that crosses the capacity threshold. An operator who sees only
+MAE will not know whether the peak hour and the peak level were forecast in
+time.
+
+The evaluation module therefore scores peaks separately
+(Section~\ref{sec:peak}). Peak magnitude error measures the level miss.
+Peak timing error measures whether the forecast peak falls on the right hour.
+Breach anticipation rate measures whether hours above \(\tau\) were flagged
+before they occurred. The dashboard repeats the same threshold on the plotted
+forecast, so the numeric BAR and the on-screen alert refer to one rule.

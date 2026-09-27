@@ -1,0 +1,88 @@
+\section{Main Code Components}
+\label{sec:code}
+
+\subsection{Code Base Architecture}
+\label{sec:architecture}
+
+All executable code lives under \texttt{source\_code/}. The report and this
+chapter only describe that tree. Figure~\ref{fig:pipeline} is the runtime
+path from the raw UCI file to the dashboard.
+
+\begin{figure}[h]
+  \centering
+  \begin{tikzpicture}[
+    node distance=3.6mm,
+    box/.style={draw, rounded corners=2pt, fill=blue!5, align=center,
+                font=\small, inner sep=3pt, minimum height=7.5mm},
+    src/.style={draw, rounded corners=2pt, fill=orange!10, align=center,
+                font=\small, inner sep=3pt, minimum height=7.5mm},
+    arr/.style={-{Latex[length=1.8mm]}, thick}
+  ]
+    \node[src] (uci) {UCI Tetouan CSV};
+    \node[box, below=of uci] (load) {\texttt{data\_loader.py}: parse and aggregate to hours};
+    \node[box, below=of load] (feat) {\texttt{feature\_engineering.py}: calendar, lags, rolling, weather};
+    \node[box, below=of feat] (model) {\texttt{models.py}: naive, ridge, forest, XGBoost, LightGBM};
+    \node[box, below=of model] (eval) {\texttt{evaluation.py}: MAE, RMSE, WAPE, peak scores, figures};
+    \node[box, below=of eval] (out) {\texttt{outputs/metrics.json} and \texttt{predictions.csv}};
+    \node[box, below=of out] (app) {\texttt{app.py}: Streamlit forecast and threshold alert};
+    \draw[arr] (uci) -- (load);
+    \draw[arr] (load) -- (feat);
+    \draw[arr] (feat) -- (model);
+    \draw[arr] (model) -- (eval);
+    \draw[arr] (eval) -- (out);
+    \draw[arr] (out) -- (app);
+  \end{tikzpicture}
+  \caption{Pipeline from the public series to the alert dashboard.}
+  \label{fig:pipeline}
+\end{figure}
+
+\begin{table}[h]
+  \centering
+  \small
+  \begin{tabular}{@{}lp{9.4cm}@{}}
+    \toprule
+    Path & Responsibility \\
+    \midrule
+    \texttt{src/data\_loader.py} & Download the UCI file if it is not cached, standardise column names, sum the three zones, and aggregate to hourly demand. \\
+    \texttt{src/feature\_engineering.py} & Build calendar flags, lags, shifted rolling statistics and temperature interactions. Cut the table into \(D_{\mathrm{train}}\), \(T_{\mathrm{valid}}\) and \(T_{\mathrm{test}}\). \\
+    \texttt{src/models.py} & Fit the seasonal naive, ridge, random forest, XGBoost and LightGBM models. Choose hyperparameters on the validation block. \\
+    \texttt{src/evaluation.py} & Compute MAE, RMSE, WAPE and the peak metrics, and write the figures listed in Sections~\ref{sec:eda} and~\ref{sec:results}. \\
+    \texttt{run\_pipeline.py} & Run the four modules and store \texttt{outputs/metrics.json} plus \texttt{outputs/predictions.csv}. \\
+    \texttt{app.py} & Streamlit page: test-block forecast, capacity line, breach-anticipation summary and an alert when the forecast exceeds \(\tau\). \\
+    \bottomrule
+  \end{tabular}
+  \caption{Modules in \texttt{source\_code/}.}
+  \label{tab:modules}
+\end{table}
+
+The dashboard reads saved predictions. It does not retrain. Changing a model
+hyperparameter means re-running \texttt{run\_pipeline.py}, then refreshing
+the Streamlit page.
+
+\subsection{Tech Stack}
+\label{sec:stack}
+
+The language is Python 3.12. Table~\ref{tab:stack} lists the libraries pinned
+in \texttt{source\_code/requirements.txt} and the role each one plays.
+
+\begin{table}[h]
+  \centering
+  \small
+  \begin{tabular}{@{}ll@{}}
+    \toprule
+    Library & Role in this project \\
+    \midrule
+    \texttt{pandas}, \texttt{numpy} & Tables, resampling, lags and rolling windows \\
+    \texttt{scikit-learn} & Ridge, random forest, MAE during model selection \\
+    \texttt{xgboost}, \texttt{lightgbm} & Gradient-boosting forecasters \\
+    \texttt{matplotlib}, \texttt{seaborn} & EDA figures and the test-set charts \\
+    \texttt{streamlit} & Forecast and alert dashboard \\
+    \bottomrule
+  \end{tabular}
+  \caption{Python stack.}
+  \label{tab:stack}
+\end{table}
+
+No extra service is required. The UCI file is fetched over HTTPS on the first
+run and cached under \texttt{source\_code/data/raw/}. Later runs reuse the
+cache.

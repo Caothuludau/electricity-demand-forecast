@@ -1,0 +1,63 @@
+\appendix
+
+\section{Reproducing the study}
+\label{sec:reproduce}
+
+From the repository root, the commands in Listing~\ref{lst:commands} create a
+virtual environment, install the stack, fit the models, and open the
+dashboard. The first pipeline run downloads the UCI CSV into
+\texttt{source\_code/data/raw/}. A second run reuses that file.
+
+\begin{lstlisting}[style=python, caption={Setup, training and dashboard.}, label={lst:commands}]
+cd source_code
+python -m venv .venv
+.venv/Scripts/python -m pip install -r requirements.txt
+.venv/Scripts/python run_pipeline.py
+.venv/Scripts/python -m streamlit run app.py
+\end{lstlisting}
+
+On macOS or Linux, replace \path{.venv/Scripts/python} with
+\path{.venv/bin/python}. The pipeline writes:
+
+\begin{itemize}[itemsep=1pt]
+  \item \texttt{outputs/metrics.json}, the source for every square-bracket
+        number in Chapters~\ref{sec:dataset}, \ref{sec:models} and~\ref{sec:results};
+  \item \texttt{outputs/predictions.csv}, the series read by \texttt{app.py};
+  \item \texttt{outputs/figures/*.png}, the charts named in the figure boxes.
+\end{itemize}
+
+Copy the PNG files into \path{report/figures/} and replace each
+\verb|\figplaceholder| with an \verb|\includegraphics| of the matching file.
+
+\section{Compiling the report}
+
+The report is the \texttt{article} source in this folder. From
+\texttt{report/}:
+
+\begin{lstlisting}[style=python, caption={Three pdflatex passes.}, label={lst:latex}]
+pdflatex -interaction=nonstopmode main
+pdflatex -interaction=nonstopmode main
+pdflatex -interaction=nonstopmode main
+\end{lstlisting}
+
+A shell script with the same passes is \texttt{report/compile.sh}. On
+Windows, run \texttt{report/compile.bat}. \texttt{report/compile.ps1} is the
+same build, but PowerShell may refuse it when script execution is disabled.
+The bibliography is inline (\texttt{thebibliography}), so BibTeX is not required.
+
+\section{Work record}
+
+\begin{table}[h]
+  \centering
+  \small
+  \begin{tabular}{@{}ll@{}}
+    \toprule
+    Name & Contribution \\
+    \midrule
+    Luong Nguyen Phu & Pipeline, dashboard and report template \\
+    Additional member & Contribution \\
+    \bottomrule
+  \end{tabular}
+  \caption{Division of work. Add rows for the rest of the group.}
+  \label{tab:work}
+\end{table}

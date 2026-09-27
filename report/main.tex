@@ -1,0 +1,134 @@
+\documentclass{article}
+\usepackage{fancyhdr}
+\usepackage[margin=0.95in]{geometry}
+\usepackage{graphicx}
+\usepackage{setspace}
+\usepackage{indentfirst}
+\usepackage{hyperref}
+\usepackage{siunitx}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage[utf8]{inputenc}
+\setcounter{tocdepth}{3}
+\usepackage{subcaption}
+\usepackage{placeins}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{algpseudocode}
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{mathtools}
+\usepackage{amsfonts}
+\usepackage{adjustbox}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, calc, positioning}
+\usepackage{booktabs}
+
+\colorlet{punct}{red!60!black}
+\definecolor{background}{HTML}{EEEEEE}
+\definecolor{delim}{RGB}{20,105,176}
+\colorlet{numb}{magenta!60!black}
+
+\lstdefinestyle{python}{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    numbers=left,
+    numberstyle=\scriptsize,
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{background},
+    keywordstyle=\color{blue!70!black},
+    commentstyle=\color{green!40!black},
+    stringstyle=\color{orange!60!black}
+}
+
+\newcommand{\figplaceholder}[1]{%
+  \fbox{\parbox[c][3.4cm][c]{0.88\linewidth}{\centering\small #1}}%
+}
+
+\pagestyle{fancy}
+\setlength{\arrayrulewidth}{0.5mm}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.35}
+\setlength{\emergencystretch}{2em}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    pdftitle={Short-Term Electricity Demand Forecasting for Tetouan City},
+    pdfpagemode=FullScreen,
+}
+
+\onehalfspacing
+
+\begin{document}
+
+\fancyhead{}
+\lhead{Semester 2026.1}
+\rhead{Course: Data Science}
+\fancyfoot{}
+\cfoot{\large Hanoi 2026}
+\begin{center}
+    \vspace*{0.5cm}
+    \begin{Large}
+    \textbf{HANOI UNIVERSITY OF SCIENCE AND TECHNOLOGY}
+
+    SCHOOL OF INFORMATION AND COMMUNICATION TECHNOLOGY FACULTY OF COMPUTER SCIENCE
+    \end{Large}
+
+    \textbf{--------------------  o0o  ---------------------}
+
+    \vspace{1.0cm}
+
+    \includegraphics[width=3cm]{figures/hust-logo.png}
+
+    \vspace{0.9cm}
+
+    \begin{huge}
+    \textbf{PROJECT REPORT:}
+    \end{huge}
+
+    \vspace{0.1cm}
+
+    \begin{Large}
+    \textbf{Short-Term Electricity Demand Forecasting\\
+    and Peak-Capacity Alerts for Tetouan City}
+    \end{Large}
+    \rule{\linewidth}{1pt}
+    \begin{center}
+        \begin{large}
+        \textbf{Lecturer: Associate Professor, Ph.D. Than Quang Khuat}\\[0.2cm]
+        \textbf{Author:}\\[0.15cm]
+        \begin{tabular}{lcl}
+            \textbf{Nguyen Phu Luong} & 20261217M & luong.np261217m@sis.hust.edu.vn \\
+            \textbf{Ho Xuan Khoa} & 20261257M & khoa.hx261257m@sis.hust.edu.vn \\
+            \textbf{Nguyen Tue Lam} & 20261207M & lam.nt261207m@sis.hust.edu.vn \\
+        \end{tabular}
+        \end{large}
+    \end{center}
+    \rule{\linewidth}{1pt}
+
+\end{center}
+
+\newpage
+\fancyfoot{}
+\fancyfoot[C]{\thepage}
+
+\tableofcontents
+
+\newpage
+\input{chapters/0_abstract}
+\input{chapters/1_introduction}
+\input{chapters/2_methodology}
+\input{chapters/3_results}
+\input{chapters/4_code}
+\input{chapters/5_difficulties}
+\input{chapters/6_conclusion}
+\input{chapters/7_references}
+\input{chapters/8_appendix}
+
+\end{document}

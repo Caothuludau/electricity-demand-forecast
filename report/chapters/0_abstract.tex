@@ -1,0 +1,20 @@
+\section*{Abstract}
+\addcontentsline{toc}{section}{Abstract}
+
+This report presents a short-term electricity demand forecasting study for
+Tetouan, Morocco. The operating problem is to anticipate city load one hour
+ahead, and to raise an alert when the forecast crosses a safety capacity
+threshold, so that reserve margin can be armed before the evening peak. The
+source is the UCI \emph{Power Consumption of Tetouan City} series: 10-minute
+measurements from three distribution zones, together with temperature,
+humidity, wind speed and diffuse solar radiation. The series is aggregated to
+hourly demand. Calendar variables, lagged demand, rolling statistics and
+weather features feed a seasonal-naive baseline, a ridge regression, a random
+forest, and two gradient-boosting models (XGBoost and LightGBM). Models are
+compared on a future test block with MAE, RMSE and WAPE, and peak risk is
+scored with peak-magnitude error, peak-timing error and breach anticipation
+rate. Square-bracket entries in the result tables are completed from
+\path{source_code/outputs/metrics.json} after the pipeline is run.
+
+\noindent\textbf{Keywords:} electricity demand; short-term load forecasting;
+time series; gradient boosting; peak capacity; Tetouan.

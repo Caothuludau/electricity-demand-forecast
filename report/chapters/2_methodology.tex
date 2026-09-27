@@ -1,0 +1,140 @@
+\section{Analytical Methodology}
+\label{sec:methodology}
+
+\subsection{Data Preprocessing and Feature Engineering}
+\label{sec:features}
+
+Preprocessing is deterministic and uses only information that is available
+when the forecast for hour \(t\) is issued. Weather at hour \(t\) is treated
+as a forecast the operator already holds. Demand features use hours strictly
+before \(t\).
+
+\paragraph{Aggregation.}
+\texttt{src/data\_loader.py} downloads the UCI file, parses the timestamp, sums
+the three zones into \texttt{total\_kw}, and resamples to one-hour bins.
+Weather columns and zone loads are averaged inside the hour.
+
+\paragraph{Calendar features.}
+From the timestamp the pipeline builds hour of day (\(0\)--\(23\)), day of
+week (\(0\)--\(6\)), month, and a weekend flag \texttt{is\_weekend}. These
+variables let a tree model represent the daily and weekly cycle without a
+separate seasonal decomposition.
+
+\paragraph{Lag features.}
+Demand at \(t-1\,\mathrm{h}\), \(t-2\,\mathrm{h}\), \(t-24\,\mathrm{h}\) and
+\(t-168\,\mathrm{h}\) is added so the model can use short-run persistence, the
+previous day, and the same hour of the previous week. The weekly lag is also
+the forecast of the seasonal-naive baseline.
+
+\paragraph{Rolling-window features.}
+A trailing mean and a trailing standard deviation are computed on windows of
+3, 6 and 24 hours. Each window is applied to the series shifted by one hour.
+The value at time \(t\) therefore does not enter its own features. This is
+the leakage control described in Section~\ref{sec:leakage}.
+
+\paragraph{Weather and interaction features.}
+Temperature, humidity, wind speed and the two diffuse-radiation channels are
+kept as exogenous inputs. Because the link between temperature and load is
+curved (cooling load rises once the day is hot), the feature set also
+includes a cooling degree above \(22^\circ\mathrm{C}\), squared temperature,
+and the product of temperature and hour. Tree ensembles can split on these
+terms directly. The linear ridge model receives the same columns after
+standardisation, so the comparison stays on one feature matrix.
+
+\subsection{Exploratory Data Analysis}
+\label{sec:eda}
+
+Exploration is done on the hourly series before any model is scored on the
+test block. Four views are required. Each figure below is a placeholder for
+the PNG written by \texttt{src/evaluation.py} into \texttt{outputs/figures/}.
+Replace the box with \verb|\includegraphics| once the file exists.
+
+\begin{figure}[h]
+  \centering
+  \figplaceholder{Line plot: mean demand by hour, weekday and weekend\\
+  (\texttt{daily\_profile.png}), plus a two-week trace (\texttt{weekly\_series.png})\\
+  and monthly means (\texttt{monthly\_mean.png}).}
+  \caption{Demand level across the day, a sample of weeks, and the year.}
+  \label{fig:seasonality}
+\end{figure}
+
+The daily profile shows when the city peaks. The weekly trace shows the
+repeat of that shape from one day to the next. The monthly bars show the
+seasonal lift, which in this climate is expected to follow temperature.
+
+\begin{figure}[h]
+  \centering
+  \figplaceholder{Scatter of temperature against demand (\texttt{temp\_scatter.png})\\
+  and the weather correlation heatmap (\texttt{correlation\_heatmap.png}).}
+  \caption{Association between weather and city demand.}
+  \label{fig:weather}
+\end{figure}
+
+The scatter is the check for a non-linear temperature response. The heatmap
+ranks linear association of temperature, humidity, wind and radiation with
+demand. Record the Pearson correlations from \texttt{profile.corr\_with\_demand}
+in the text under the figure after the run. Temperature is the weather
+variable the operating discussion relies on.
+
+\begin{figure}[h]
+  \centering
+  \figplaceholder{Autocorrelation bars for lags 0 to 168 hours\\
+  (\texttt{autocorrelation.png}).}
+  \caption{Autocorrelation of hourly city demand.}
+  \label{fig:acf}
+\end{figure}
+
+The autocorrelation plot justifies the lag set. Peaks near 24 hours and
+168 hours support the daily and weekly features. The values at lags 1, 2, 24
+and 168 are stored in \texttt{profile.acf}.
+
+\subsection{Modeling and Validation Approach}
+\label{sec:models}
+
+The supervised table is cut into three contiguous blocks in time order. There
+is no shuffle and no overlap. With the default ratios the earliest 70\% is
+the training block \(D_{\mathrm{train}}\), the next 15\% is the validation
+block \(T_{\mathrm{valid}}\), and the last 15\% is the test block
+\(T_{\mathrm{test}}\). Hyperparameters are chosen by validation MAE.
+\(T_{\mathrm{test}}\) is scored once, after that choice.
+
+\begin{table}[h]
+  \centering
+  \small
+  \begin{tabular}{@{}llll@{}}
+    \toprule
+    Block & Role & Rows & Span \\
+    \midrule
+    \(D_{\mathrm{train}}\) & Fit the model & [XX] & [start] to [end] \\
+    \(T_{\mathrm{valid}}\) & Select hyperparameters & [XX] & [start] to [end] \\
+    \(T_{\mathrm{test}}\) & Report MAE, RMSE, WAPE, peak scores & [XX] & [start] to [end] \\
+    \bottomrule
+  \end{tabular}
+  \caption{Chronological backtest. Fill the cells from \texttt{metrics.json} key \texttt{splits}.}
+  \label{tab:splits}
+\end{table}
+
+Five forecasters share that split.
+
+\begin{enumerate}[label=(\arabic*), itemsep=2pt]
+  \item \textbf{Seasonal naive.} The forecast for hour \(t\) is the observed
+        demand at \(t-168\). This baseline is strong whenever the weekly cycle
+        dominates, and it is the reference for every learned model.
+  \item \textbf{Ridge regression.} A standardised linear model. The penalty
+        \(\alpha\) is chosen from \(\{0.1, 1, 10, 100\}\) on
+        \(T_{\mathrm{valid}}\).
+  \item \textbf{Random forest} \cite{breiman2001}. Two depths are compared on
+        the validation block. The forest captures threshold effects of
+        temperature and hour that a single linear coefficient cannot.
+  \item \textbf{XGBoost} \cite{chen2016}. Gradient boosting with early
+        stopping on \(T_{\mathrm{valid}}\). Learning rate and tree depth are
+        selected by validation MAE.
+  \item \textbf{LightGBM} \cite{ke2017}. The same protocol as XGBoost, with
+        the number of leaves in place of depth. LightGBM is the model used
+        for the feature-importance discussion and for the default dashboard
+        view.
+\end{enumerate}
+
+The selected parameter dictionary for each model is written to
+\texttt{selected\_params} in the metrics file. Paste that dictionary into
+the appendix or under Table~\ref{tab:scores} when the report is finalised.

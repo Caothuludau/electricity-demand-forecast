@@ -1,0 +1,25 @@
+\section{Conclusion and Future Work}
+\label{sec:conclusion}
+
+The study specifies a full path from the public Tetouan series to an
+operating alert. Ten-minute zone measurements are summed and aggregated to
+hourly city demand. Calendar, lag, rolling and weather features are built
+without using the future. A seasonal-naive baseline, ridge regression, a
+random forest, XGBoost and LightGBM are compared on a later test block that
+was not used for training or for model selection. Beside MAE, RMSE and WAPE,
+the report records peak magnitude, peak timing and breach anticipation, which
+are the scores that speak to reserve-margin decisions.
+
+Once Table~\ref{tab:scores} and Table~\ref{tab:peak} are filled, the
+conclusion should state the best model by MAE and whether that same model
+also leads on breach anticipation. The operating recommendation follows the
+hour profile in Figure~\ref{fig:importance}: arm reserve one to two hours
+before the clock window that most often exceeds \(\tau\), with the evening
+hours from 18:00 to 21:00 as the window this design is built to protect.
+
+Two extensions stay outside the present pipeline. The first is a quantile
+forecast, so the alert can be raised from an upper quantile rather than from
+a single point prediction. The second is a multi-horizon forecast at 1 hour,
+6 hours and 24 hours, using a separate model or a direct horizon feature for
+each lead time. Both extensions reuse the same chronological split and the
+same peak metrics.
