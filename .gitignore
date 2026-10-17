@@ -1,5 +1,15 @@
 .DS_Store
 .venv/
 __pycache__/
+**/__pycache__/
 *.py[cod]
 .ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+*.local
+.idea/
+.vscode/
+!.vscode/extensions.json

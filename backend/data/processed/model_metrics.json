@@ -1,0 +1,50 @@
+{
+  "capacity_threshold": 99400.4391375,
+  "capacity_quantile": 0.95,
+  "test_window": {
+    "start": "2017-11-30 23:00:00",
+    "end": "2017-12-30 23:00:00"
+  },
+  "target_coverage": 0.8,
+  "models": {
+    "Seasonal Naive 24h": {
+      "model": "Seasonal Naive 24h",
+      "MAE": 2072.511580529126,
+      "RMSE": 3295.625297547274,
+      "WAPE": 0.032506512378424404,
+      "peak_magnitude_error": 0.0,
+      "peak_magnitude_error_pct": 0.0,
+      "peak_timing_error_hours": 24.0,
+      "actual_peak": 91627.91264666666,
+      "predicted_peak": 91627.91264666666
+    },
+    "Seasonal Naive 168h": {
+      "model": "Seasonal Naive 168h",
+      "MAE": 1775.388034949607,
+      "RMSE": 2618.8656564084736,
+      "WAPE": 0.027846248810760227,
+      "peak_magnitude_error": 1887.233711666675,
+      "peak_magnitude_error_pct": 2.0596711822348066,
+      "peak_timing_error_hours": 504.0,
+      "actual_peak": 91627.91264666666,
+      "predicted_peak": 93515.14635833334
+    },
+    "LightGBM": {
+      "model": "LightGBM",
+      "MAE": 1005.0615315589012,
+      "RMSE": 1454.1713453230755,
+      "WAPE": 0.015763986760622333,
+      "peak_magnitude_error": 74.54099413035146,
+      "peak_magnitude_error_pct": 0.08135184135187563,
+      "peak_timing_error_hours": 24.0,
+      "actual_peak": 91627.91264666666,
+      "predicted_peak": 91702.45364079702,
+      "pinball_loss_p10": 279.532574805841,
+      "pinball_loss_p50": 502.5307657794506,
+      "pinball_loss_p90": 232.45508457899348,
+      "pinball_loss": 338.172808388095,
+      "coverage": 0.6976421636615812,
+      "average_interval_width": 2709.2191680990927
+    }
+  }
+}
