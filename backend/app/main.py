@@ -13,9 +13,8 @@ logging.basicConfig(level=logging.INFO)
 app = FastAPI(
     title="Electricity Demand Forecasting API",
     description=(
-        "Serves processed hourly load, probabilistic forecasts (P10/P50/P90), "
-        "peak-risk windows, capacity scenarios and model evaluation metrics "
-        "for the Tetuan City electricity demand forecasting project."
+        "Serves the Tetouan raw series, hourly aggregates, EDA charts, "
+        "the saved LightGBM/XGBoost evaluation, and forecasts from imported rows."
     ),
     version="1.0.0",
 )

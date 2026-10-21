@@ -77,4 +77,37 @@ export const api = {
   dataQuality: () => request<import("@/types/api").DataQualityResponse>("/api/data/quality"),
 
   health: () => request<import("@/types/api").HealthResponse>("/api/health"),
+
+  raw: (params?: { limit?: number; offset?: number }) =>
+    request<import("@/types/viz").RawResponse>("/api/raw", params),
+
+  processed: () => request<import("@/types/viz").ProcessedResponse>("/api/processed"),
+
+  eda: () => request<import("@/types/viz").EdaResponse>("/api/eda"),
+
+  modelEvaluation: () => request<import("@/types/viz").ModelResponse>("/api/model"),
+
+  storedForecast: () => request<import("@/types/viz").ForecastStore>("/api/forecast"),
+
+  importForecast: async (file: File) => {
+    const body = new FormData();
+    body.append("file", file);
+    let response: Response;
+    try {
+      response = await fetch(`${API_BASE}/api/forecast/import`, { method: "POST", body });
+    } catch {
+      throw new ApiError(0, "API unavailable — is the backend running on port 8000?");
+    }
+    if (!response.ok) {
+      let detail = `${response.status} ${response.statusText}`;
+      try {
+        const payload = await response.json();
+        if (typeof payload?.detail === "string") detail = payload.detail;
+      } catch {
+        /* keep default */
+      }
+      throw new ApiError(response.status, detail);
+    }
+    return response.json() as Promise<import("@/types/viz").ImportResult>;
+  },
 };

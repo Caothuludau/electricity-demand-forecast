@@ -202,6 +202,65 @@ def raw_to_model_frame(df_raw: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
     return build_model_frame(aggregate_hourly(df))
 
 
+def _core_frame(df_raw: pd.DataFrame) -> pd.DataFrame:
+    columns = [
+        "datetime",
+        "temperature",
+        "humidity",
+        "wind_speed",
+        "general_diffuse_flows",
+        "diffuse_flows",
+        "zone_1_power",
+        "zone_2_power",
+        "zone_3_power",
+    ]
+    return standardize_raw(df_raw)[columns]
+
+
+def forecast_new_observations(
+    history_raw: pd.DataFrame, new_raw: pd.DataFrame
+) -> tuple[pd.DataFrame, list[str]]:
+    """Append new 10-minute rows and build a forecast row for each new hour.
+
+    Every new hour must contain six readings, and the combined series must stay
+    on a 10-minute grid. `actual_target_t_plus_1` is filled when hour t+1 is
+    already present and is not a predictor.
+    """
+    if new_raw.empty:
+        raise ValueError("Import file has no rows")
+
+    history = _core_frame(history_raw)
+    incoming = _core_frame(new_raw)
+    overlap = sorted(set(history["datetime"]).intersection(incoming["datetime"]))
+    if overlap:
+        raise ValueError(f"Timestamp already stored: {overlap[0]}")
+
+    series = (
+        pd.concat([history, incoming], ignore_index=True)
+        .sort_values("datetime")
+        .reset_index(drop=True)
+    )
+    validate_10min(series)
+
+    hour_counts = series.set_index("datetime")["temperature"].resample("h").size()
+    incomplete = hour_counts[hour_counts != 6]
+    if len(incomplete):
+        raise ValueError(
+            "Hour is incomplete. A forecast origin needs six 10-minute readings: "
+            f"{incomplete.index[0]}"
+        )
+
+    hourly = aggregate_hourly(series)
+    new_hours = set(incoming["datetime"].dt.floor("h"))
+    model_df, feature_columns = build_model_frame(hourly, require_target=False)
+    origin = model_df["forecast_time"] - pd.Timedelta(hours=1)
+    rows = model_df.loc[origin.isin(new_hours)].copy()
+    if rows.empty:
+        raise ValueError("Not enough history before these records to build features")
+    rows = rows.rename(columns={"target_t_plus_1": "actual_target_t_plus_1"})
+    return rows, feature_columns
+
+
 def forecast_frame_for_record(
     history_raw: pd.DataFrame, record_raw: pd.DataFrame
 ) -> tuple[pd.DataFrame, list[str]]:

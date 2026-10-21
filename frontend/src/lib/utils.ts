@@ -5,6 +5,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function formatPower(value: number | null | undefined, digits = 0): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return "—";
+  return value.toLocaleString(undefined, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
+}
+
 export function formatMW(value: number | null | undefined, digits = 1): string {
   if (value === null || value === undefined || Number.isNaN(value)) return "—";
   return `${value.toFixed(digits)} MW`;
